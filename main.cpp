@@ -33,6 +33,8 @@ public:
 	}
 };
 
+void readByLine(string, vector<fNode> *, struct dirent *, int);
+
 vector<int> shiftTable;
 vector<pNode *> suffixTable = vector<pNode *>(vectorLength, NULL);
 
@@ -141,82 +143,28 @@ int main(int argv, char *arg[]) {
 	string path;
 	DIR *dir;
 	struct dirent *dirent;
-	string line;
+//	string line;
 
 	vector<fNode> okFile = vector<fNode>();
 
-	int matches = 0;                                  // The number of matches
-	unsigned long rIndex = 1;                         // Read index
-	unsigned long cIndex = 0;                         // Compare index (extract block from line)
-	string candidate;
-	int canHash = 0;
-	pNode *node;
+//	int matches = 0;                                  // The number of matches
+//	unsigned long rIndex = 1;                         // Read index
+//	unsigned long cIndex = 0;                         // Compare index (extract block from line)
+//	string candidate;
+//	int canHash = 0;
+//	pNode *node;
 
 	if((dir = opendir(arg[1])) != NULL){
 		while((dirent = readdir(dir)) != NULL){
 			if(string(dirent->d_name) == "." || string(dirent->d_name) == "..") continue;
 			path = directory + "/" + dirent->d_name;
-			ifstream file(path);                                    // Open a file
 
-			vector<string> patterns(0);
 			// Read a file
-			while (getline(file, line)){
-				transform(line.begin(), line.end(), line.begin(), ::tolower);
-
-				rIndex = 1; cIndex = 0;
-
-				while(rIndex < line.length()){                          // Read character one by one
-					candidate = line.substr(rIndex - 1, 2);
-					canHash = hash_any(candidate);
-
-					if(shiftTable[canHash] != 0){
-						// Go ahead if not the end of a pattern
-						rIndex += shiftTable[canHash];
-						if(rIndex >= line.length()){                // TODO: Considering change line and compare again
-							rIndex = 1; cIndex = 0;
-							break;
-						}
-					}
-					else{
-						// At the end of a pattern
-						if(rIndex + 1 < maxCommon){
-							rIndex++;
-							continue;
-						}
-						cIndex = rIndex + 1 - maxCommon;
-						node = suffixTable[canHash];
-						while(node != NULL){                        // Compare each pattern with identical suffix
-							if(stringMatch(line.substr(cIndex, 2), node->prefix)){
-								// If prefix matched. then compare all string
-								if(cIndex + node->pattern.length() > line.length()){
-									rIndex += node->pattern.length();
-									break;
-								}
-								if(stringMatch(line.substr(cIndex, node->pattern.length()), node->pattern)){       // Match
-									matches++;
-									patterns.push_back(node->pattern);
-									sort(patterns.begin(), patterns.end());
-									vector<string>::iterator iter = unique(patterns.begin(), patterns.end());
-									patterns.erase(iter, patterns.end());
-								}
-							}
-							node = node->next;
-							cIndex = rIndex + 1 - maxCommon;
-						}
-						rIndex++;
-					}
-				}
-			}
-			if(patterns.size() == argv - fixArguments){                                 // If all patterns are matched
-				okFile.push_back(fNode(dirent->d_name, matches));
-			}
-			// When finishing reading a file, do some cleaning
-			matches = 0;
-			patterns.empty();
-			file.close();
+			readByLine(path, &okFile, dirent, argv);
 		}
 	}
 
+	// When finish reading, sort and output result
 	sort(okFile.begin(), okFile.end(), compare);
 	for(vector<fNode>::iterator ite = okFile.begin(); ite != okFile.end(); ite++){
 //		cout << ite->file << ": " << ite->match << endl;
@@ -224,4 +172,74 @@ int main(int argv, char *arg[]) {
 	}
 
 	return 0;
+}
+
+void readByLine(string path, vector<fNode> *okFile, struct dirent *dirent, int argv){
+	ifstream file(path);
+	string line;
+
+	vector<string> patterns(0);                             // Store matched patterns for each file
+	int matches = 0;                                  // The number of matches
+	unsigned long rIndex = 1;                         // Read index
+	unsigned long cIndex = 0;                         // Compare index (extract block from line)
+	string candidate;
+	int canHash = 0;
+	pNode *node;
+
+	while (getline(file, line)){
+		transform(line.begin(), line.end(), line.begin(), ::tolower);
+
+		rIndex = 1; cIndex = 0;
+
+		while(rIndex < line.length()){                          // Read character one by one
+			candidate = line.substr(rIndex - 1, 2);
+			canHash = hash_any(candidate);
+
+			if(shiftTable[canHash] != 0){
+				// Go ahead if not the end of a pattern
+				rIndex += shiftTable[canHash];
+				if(rIndex >= line.length()){                // TODO: Considering change line and compare again
+//					rIndex = 1; cIndex = 0;
+					break;
+				}
+			}
+			else{
+				// At the end of a pattern
+				if(rIndex + 1 < maxCommon){
+					rIndex++;
+					continue;
+				}
+				cIndex = rIndex + 1 - maxCommon;
+				node = suffixTable[canHash];
+				while(node != NULL){                        // Compare each pattern with identical suffix
+					if(stringMatch(line.substr(cIndex, 2), node->prefix)){
+						// If prefix matched. then compare all string
+						if(cIndex + node->pattern.length() > line.length()){
+							rIndex += node->pattern.length();
+							break;
+						}
+						if(stringMatch(line.substr(cIndex, node->pattern.length()), node->pattern)){       // Match
+							matches++;
+							patterns.push_back(node->pattern);
+							sort(patterns.begin(), patterns.end());
+							vector<string>::iterator iter = unique(patterns.begin(), patterns.end());
+							patterns.erase(iter, patterns.end());
+						}
+					}
+					node = node->next;
+					cIndex = rIndex + 1 - maxCommon;
+				}
+				rIndex++;
+			}
+		}
+	}
+	file.close();
+
+	if(patterns.size() == argv - fixArguments){                                 // If all patterns are matched
+		okFile->push_back(fNode(dirent->d_name, matches));
+	}
+
+//	patterns.empty();
+
+
 }
