@@ -1,39 +1,4 @@
-#define vectorLength 128 * 129 + 1
-#define blockSize 2
-
-#include <iostream>
-#include <fstream>
-#include <dirent.h>
-#include <vector>
-#include <algorithm>
-
-using namespace std;
-
-class pNode{
-public:
-    string pattern;
-    string prefix;
-    pNode *next;
-public:
-    pNode(string pat, string pre){
-        pattern = pat;
-        prefix = pre;
-        next = NULL;
-    }
-};
-
-class fNode{
-public:
-	string file;
-	int match;
-public:
-	fNode(string f, int m){
-		file = f;
-		match = m;
-	}
-};
-
-void readByLine(string, vector<fNode> *, struct dirent *, int);
+#include "main.h"
 
 vector<int> shiftTable;
 vector<pNode *> suffixTable = vector<pNode *>(vectorLength, NULL);
@@ -76,10 +41,12 @@ bool compare(fNode x, fNode y){
 	return x.file < y.file;
 }
 bool stringMatch(string x, string y){
-//	transform(x.begin(), x.end(), x.begin(), ::tolower);
-//	transform(y.begin(), y.end(), y.begin(), ::tolower);
-	if(x == y) return true;
-	return false;
+	if(x.length() == 2 && y.length() == 2){
+		return hash_any(x) == hash_any(y);
+	}
+	transform(x.begin(), x.end(), x.begin(), ::tolower);
+	transform(y.begin(), y.end(), y.begin(), ::tolower);
+	return x == y;
 }
 
 int hash_any(string patternBlock){
@@ -143,16 +110,7 @@ int main(int argv, char *arg[]) {
 	string path;
 	DIR *dir;
 	struct dirent *dirent;
-//	string line;
-
 	vector<fNode> okFile = vector<fNode>();
-
-//	int matches = 0;                                  // The number of matches
-//	unsigned long rIndex = 1;                         // Read index
-//	unsigned long cIndex = 0;                         // Compare index (extract block from line)
-//	string candidate;
-//	int canHash = 0;
-//	pNode *node;
 
 	if((dir = opendir(arg[1])) != NULL){
 		while((dirent = readdir(dir)) != NULL){
@@ -161,6 +119,7 @@ int main(int argv, char *arg[]) {
 
 			// Read a file
 			readByLine(path, &okFile, dirent, argv);
+//			readWholeFile(path, &okFile, dirent, argv);
 		}
 	}
 
@@ -187,7 +146,7 @@ void readByLine(string path, vector<fNode> *okFile, struct dirent *dirent, int a
 	pNode *node;
 
 	while (getline(file, line)){
-		transform(line.begin(), line.end(), line.begin(), ::tolower);
+//		transform(line.begin(), line.end(), line.begin(), ::tolower);
 
 		rIndex = 1; cIndex = 0;
 
@@ -242,4 +201,69 @@ void readByLine(string path, vector<fNode> *okFile, struct dirent *dirent, int a
 //	patterns.empty();
 
 
+}
+
+void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent, int argv){
+	vector<string> patterns(0);                             // Store matched patterns for each file
+	int matches = 0;                                        // The number of matches
+	unsigned long rIndex = 1;                               // Read index
+	unsigned long cIndex = 0;                               // Compare index (extract block from line)
+	string candidate;
+	int canHash = 0;
+	pNode *node;
+
+	string line = readFile(path);
+//	transform(line.begin(), line.end(), line.begin(), ::tolower);
+
+	while(rIndex < line.length()){                          // Read character one by one
+		candidate = line.substr(rIndex - 1, 2);
+		canHash = hash_any(candidate);
+
+		if(shiftTable[canHash] != 0){
+			// Go ahead if not the end of a pattern
+			rIndex += shiftTable[canHash];
+			if(rIndex >= line.length()){                // TODO: Considering change line and compare again
+//					rIndex = 1; cIndex = 0;
+				break;
+			}
+		}
+		else{
+			// At the end of a pattern
+			if(rIndex + 1 < maxCommon){
+				rIndex++;
+				continue;
+			}
+			cIndex = rIndex + 1 - maxCommon;
+			node = suffixTable[canHash];
+			while(node != NULL){                        // Compare each pattern with identical suffix
+				if(stringMatch(line.substr(cIndex, 2), node->prefix)){
+					// If prefix matched. then compare all string
+					if(cIndex + node->pattern.length() > line.length()){
+						rIndex += node->pattern.length();
+						break;
+					}
+					if(stringMatch(line.substr(cIndex, node->pattern.length()), node->pattern)){       // Match
+						matches++;
+						patterns.push_back(node->pattern);
+						sort(patterns.begin(), patterns.end());
+						vector<string>::iterator iter = unique(patterns.begin(), patterns.end());
+						patterns.erase(iter, patterns.end());
+					}
+				}
+				node = node->next;
+				cIndex = rIndex + 1 - maxCommon;
+			}
+			rIndex++;
+		}
+	}
+	if(patterns.size() == argv - fixArguments){                                 // If all patterns are matched
+		okFile->push_back(fNode(dirent->d_name, matches));
+	}
+}
+
+string readFile(string path){
+	ifstream f(path);
+	stringstream strStream;
+	strStream << f.rdbuf();
+	return strStream.str();
 }
