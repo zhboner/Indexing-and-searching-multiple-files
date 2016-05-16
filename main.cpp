@@ -104,89 +104,89 @@ int main(int argv, char *arg[]) {
 	return 0;
 }
 
-void readByLine(string path, vector<fNode> *okFile, struct dirent *dirent, int argv){
-	ifstream file(path);
-	string line;
-	int matches = 0;                                  // The number of matches
-	unsigned long rIndex = 1;                         // Read index
-	unsigned long cIndex = 0;                         // Compare index (extract block from line)
-	string candidate;
-	int canHash = 0;
-	pNode *node;
-	vector<bool> matchedPattern(NOofPatterns, false);
-
-	char asc1, asc2;
-
-	while (getline(file, line)){
-//		transform(line.begin(), line.end(), line.begin(), ::tolower);
-
-		rIndex = 1; cIndex = 0;
-
-		while(rIndex < line.length()){                          // Read character one by one
-			candidate = line.substr(rIndex - 1, 2);
-			asc1 = candidate.at(0); asc2 = candidate.at(1);
-			if(asc1 > 255 || asc1 < 0 || asc2 > 255 || asc2 < 0){
-				rIndex += maxCommon - blockSize + 1;
-				continue;
-			}
-
-			canHash = hash_any(candidate);
-
-			if(shiftTable[canHash] != 0){
-				// Go ahead if not the end of a pattern
-				rIndex += shiftTable[canHash];
-				if(rIndex >= line.length()){                // TODO: Considering change line and compare again
-					break;
-				}
-			}
-			else{
-				// At the end of a pattern
-				if(rIndex + 1 < maxCommon){
-					rIndex++;
-					continue;
-				}
-				cIndex = rIndex + 1 - maxCommon;
-				node = suffixTable[canHash];
-				while(node != NULL){                        // Compare each pattern with identical suffix
-					if(stringMatch(line.substr(cIndex, 2), node->prefix)){
-						// If prefix matched. then compare all string
-						if(cIndex + node->pattern.length() > line.length()){
-							rIndex += node->pattern.length();
-							break;
-						}
-						if(stringMatch(line.substr(cIndex, node->pattern.length()), node->pattern)){       // Match
-							matches++;
-							for(int i = 0; i < NOofPatterns; i++){
-								if(pattern[i] == node->pattern){
-									matchedPattern[i] = true;
-									break;
-								}
-							}
-						}
-					}
-					node = node->next;
-					cIndex = rIndex + 1 - maxCommon;
-				}
-				rIndex += maxCommon;
-			}
-		}
-	}
-	file.close();
-
-	if(checkAllPatternMatched(&matchedPattern)){                                 // If all patterns are matched
-		okFile->push_back(fNode(dirent->d_name, matches));
-	}
-
-//	patterns.empty();
-
-
-}
+//void readByLine(string path, vector<fNode> *okFile, struct dirent *dirent, int argv){
+//	ifstream file(path);
+//	string line;
+//	int matches = 0;                                  // The number of matches
+//	unsigned long rIndex = 1;                         // Read index
+//	unsigned long cIndex = 0;                         // Compare index (extract block from line)
+//	string candidate;
+//	int canHash = 0;
+//	pNode *node;
+//	vector<bool> matchedPattern(NOofPatterns, false);
+//
+//	char asc1, asc2;
+//
+//	while (getline(file, line)){
+////		transform(line.begin(), line.end(), line.begin(), ::tolower);
+//
+//		rIndex = 1; cIndex = 0;
+//
+//		while(rIndex < line.length()){                          // Read character one by one
+//			candidate = line.substr(rIndex - 1, 2);
+//			asc1 = candidate.at(0); asc2 = candidate.at(1);
+//			if(asc1 > 255 || asc1 < 0 || asc2 > 255 || asc2 < 0){
+//				rIndex += maxCommon - blockSize + 1;
+//				continue;
+//			}
+//
+//			canHash = hash_any(candidate);
+//
+//			if(shiftTable[canHash] != 0){
+//				// Go ahead if not the end of a pattern
+//				rIndex += shiftTable[canHash];
+//				if(rIndex >= line.length()){                // TODO: Considering change line and compare again
+//					break;
+//				}
+//			}
+//			else{
+//				// At the end of a pattern
+//				if(rIndex + 1 < maxCommon){
+//					rIndex++;
+//					continue;
+//				}
+//				cIndex = rIndex + 1 - maxCommon;
+//				node = suffixTable[canHash];
+//				while(node != NULL){                        // Compare each pattern with identical suffix
+//					if(stringMatch(line.substr(cIndex, 2), node->prefix)){
+//						// If prefix matched. then compare all string
+//						if(cIndex + node->pattern.length() > line.length()){
+//							rIndex += node->pattern.length();
+//							break;
+//						}
+//						if(stringMatch(line.substr(cIndex, node->pattern.length()), node->pattern)){       // Match
+//							matches++;
+//							for(int i = 0; i < NOofPatterns; i++){
+//								if(pattern[i] == node->pattern){
+//									matchedPattern[i] = true;
+//									break;
+//								}
+//							}
+//						}
+//					}
+//					node = node->next;
+//					cIndex = rIndex + 1 - maxCommon;
+//				}
+//				rIndex += maxCommon;
+//			}
+//		}
+//	}
+//	file.close();
+//
+//	if(checkAllPatternMatched(&matchedPattern)){                                 // If all patterns are matched
+//		okFile->push_back(fNode(dirent->d_name, matches));
+//	}
+//
+////	patterns.empty();
+//
+//
+//}
 
 void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent){
 	int matches = 0;                                                                                // The number of matches
 	unsigned long rIndex = (unsigned long) maxCommon - blockSize + 1;                               // Read index
 	unsigned long cIndex = 0;                                                // Compare index (extract block from line)
-	string candidate;
+//	string candidate;
 	int canHash = 0;
 	pNode *node;
 	vector<bool> matchedPattern(NOofPatterns, false);
@@ -196,14 +196,22 @@ void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent){
 
 	while(rIndex < line.length()){                          // Read character one by one
 
-		candidate = line.substr(rIndex - 1, 2);
+		asc2 = line.at(rIndex);
+		if((asc2 != 32 && asc2 < 65) || asc2 > 122 || (asc2 > 90 && asc2 < 97)){
+			rIndex += maxCommon;
+			continue;
+		}
 
-		asc1 = candidate.at(0); asc2 = candidate.at(1);
-		if(asc1 > 255 || asc1 < 0 || asc2 > 255 || asc2 < 0){
+		asc1 = line.at(rIndex - 1);
+//		candidate = line.substr(rIndex - 1, 2);
+
+//		asc1 = candidate.at(0); asc2 = candidate.at(1);
+		if((asc1 != 32 && asc1 < 65) || asc1 > 122 || (asc1 > 90 && asc1 < 97)){
 			rIndex += maxCommon - blockSize + 1;
 			continue;
 		}
-		canHash = hash_any(candidate);
+
+		canHash = hash_any((int) asc1, (int) asc2);
 
 		if(shiftTable[canHash] != 0){
 			// Go ahead if not the end of a pattern
@@ -216,7 +224,7 @@ void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent){
 			cIndex = rIndex + 1 - maxCommon;
 			node = suffixTable[canHash];
 			while(node != NULL){                        // Compare each pattern with identical suffix
-				if(stringMatch(line.substr(cIndex, 2), node->prefix)){
+				if(stringMatch(cIndex, node->prefix.length(), &line, node->prefix)){
 					// If prefix matched. then compare all string
 
 					// If the length of string is shorter than pattern, stop
@@ -224,7 +232,7 @@ void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent){
 						rIndex += node->pattern.length();
 						break;
 					}
-					if(stringMatch(line.substr(cIndex, node->pattern.length()), node->pattern)){       // Match
+					if(stringMatch(cIndex, node->pattern.length(), &line, node->pattern)){       // Match
 						matches++;
 						for(int i = 0; i < NOofPatterns; i++){
 							if(pattern[i] == node->pattern){
@@ -237,7 +245,7 @@ void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent){
 				node = node->next;
 				cIndex = rIndex + 1 - maxCommon;
 			}
-			rIndex += maxCommon;
+			rIndex += 1;
 		}
 	}
 	if(checkAllPatternMatched(&matchedPattern)){                                 // If all patterns are matched
@@ -285,20 +293,22 @@ bool compare(fNode x, fNode y){
 	}
 	return x.file < y.file;
 }
-bool stringMatch(string x, string y){
 
-//	if(x.length() == 2 && y.length() == 2){
-//		return hash_any(x) == hash_any(y);
-//	}
-	return strcasecmp(x.c_str(), y.c_str()) == 0;
-	transform(x.begin(), x.end(), x.begin(), ::tolower);
-	transform(y.begin(), y.end(), y.begin(), ::tolower);
-	return x == y;
+
+bool stringMatch(unsigned long cIndex, unsigned int length, string *source, string target){
+	char x;
+	char y;
+	for(unsigned int i = 0; i < length; ++i){
+		x = source->at(cIndex + i);
+		y = target.at(i);
+		if(tolower(x) != (int) y) return false;
+	}
+	return true;
 }
 
-int hash_any(string patternBlock){
-	int x = patternBlock.at(0);
-	int y = patternBlock.at(1);
+int hash_any(int x, int y){
+//	int x = patternBlock.at(0);
+//	int y = patternBlock.at(1);
 //	if(x >= 65 && x <= 90) x += 32;
 //	if(y >= 65 && y <= 90) y += 32;
 	return 128 * x + y;
