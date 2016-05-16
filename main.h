@@ -53,4 +53,5 @@ string readFile(string path);
 bool checkAllPatternMatched(vector<bool> *);
 int hash_block(int, int);
 bool checkString(string x, string y);
+void clean(void);
 #endif //INC_3_MAIN_H

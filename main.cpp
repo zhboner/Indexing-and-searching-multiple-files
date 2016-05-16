@@ -104,6 +104,7 @@ int main(int argv, char *arg[]) {
 		cout << ite->file << endl;
 	}
 
+	clean();
 	return 0;
 }
 
@@ -113,7 +114,6 @@ void readByLine(string path, vector<fNode> *okFile, struct dirent *dirent, int a
 	int matches = 0;                                  // The number of matches
 	unsigned long rIndex = 1;                         // Read index
 	unsigned long cIndex = 0;                         // Compare index (extract block from line)
-//	string candidate;
 	int canHash = 0;
 	pNode *node;
 	vector<bool> matchedPattern(NOofPatterns, false);
@@ -294,4 +294,18 @@ bool checkString(string x, string y){
 	transform(x.begin(), x.end(), x.begin(), ::tolower);
 	transform(y.begin(), y.end(), y.begin(), ::tolower);
 	return x == y;
+}
+
+void clean(){
+	pNode *node, *tmp;
+	for(unsigned long i = 0; i < vectorLength; ++i){
+		if(suffixTable[i] != NULL){
+			node = suffixTable[i];
+			while(node != NULL){
+				tmp = node;
+				node =node->next;
+				delete tmp;
+			}
+		}
+	}
 }
