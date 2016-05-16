@@ -97,8 +97,8 @@ int main(int argv, char *arg[]) {
 	// When finish reading, sort and output result
 	sort(okFile.begin(), okFile.end(), compare);
 	for(vector<fNode>::iterator ite = okFile.begin(); ite != okFile.end(); ite++){
-//		cout << ite->file << ": " << ite->match << endl;
-		cout << ite->file << endl;
+		cout << ite->file << ": " << ite->match << endl;
+//		cout << ite->file << endl;
 	}
 
 	return 0;
@@ -203,9 +203,7 @@ void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent){
 		}
 
 		asc1 = line.at(rIndex - 1);
-//		candidate = line.substr(rIndex - 1, 2);
 
-//		asc1 = candidate.at(0); asc2 = candidate.at(1);
 		if((asc1 != 32 && asc1 < 65) || asc1 > 122 || (asc1 > 90 && asc1 < 97)){
 			rIndex += maxCommon - blockSize + 1;
 			continue;
