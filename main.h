@@ -48,6 +48,7 @@ bool compare(fNode, fNode);
 bool stringMatch(string x, string y);
 int hash_any(string patternBlock);
 void buildTables(int argv, char *arg[]);
-void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent, int argv);
+void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent);
 string readFile(string path);
+bool checkAllPatternMatched(vector<bool> *);
 #endif //INC_3_MAIN_H
