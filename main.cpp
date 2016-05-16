@@ -16,6 +16,9 @@ void buildTables(int argv, char *arg[]){
     int hashValue;
     int shiftValue;
     pNode *node;
+	int hashTable[4];
+
+	char asc1, asc2;
 
     for(int i = 0; i < NOofPatterns; ++i){              // Set maxCommon value and get pattern array
         pattern[i] = arg[fixArguments + i];
@@ -25,37 +28,52 @@ void buildTables(int argv, char *arg[]){
             maxCommon = (int) pattern[i].length();
         }
     }
+	// Initialize shift table
+	shiftTable = vector<int>(vectorLength, maxCommon);
+	for(int j = 0; j < NOofPatterns; ++j){
+		asc2 = pattern[j].at(0);
+		for(int k = 0; k < 256; ++k){
+			shiftTable[hash_block(k, (int) asc2)] = maxCommon - blockSize + 1;
+			shiftTable[hash_block(k, toupper(asc2))] = maxCommon - blockSize + 1;
 
-	shiftTable = vector<int>(vectorLength, maxCommon - blockSize + 1);
-
+		}
+	}
 
     // Scan patterns to build two tables
     for(int j = 0; j < NOofPatterns; ++j){
         for(int m = 0; m < maxCommon - 1; m++){
             block = pattern[j].substr((unsigned int) m, blockSize);
-            hashValue = hash_any(block);
-            shiftValue = maxCommon - 2 - m;
-            if(shiftValue < shiftTable[hashValue]){          // Build shift table
-                shiftTable[hashValue] = shiftValue;
-            }
-            if(shiftValue == 0){                            // Build suffix table
-                node = new pNode(pattern[j], pattern[j].substr(0, blockSize));
-                if(suffixTable[hashValue] != NULL){
-                    pNode *tmp = suffixTable[hashValue];
-                    node->next = tmp;
-                    suffixTable[hashValue] = node;
-                }
-                else{
-                    suffixTable[hashValue] = node;
-                }
-            }
+
+	        asc1 = block.at(0), asc2 = block.at(1);
+	        hashTable[0] = hash_block(tolower(asc1), tolower(asc2));
+			hashTable[1] = hash_block(toupper(asc1), toupper(asc2));
+	        hashTable[2] = hash_block(tolower(asc1), toupper(asc2));
+	        hashTable[3] = hash_block(toupper(asc1), tolower(asc2));
+
+	        for(int i = 0; i < 4; ++i){
+		        hashValue = hashTable[i];
+		        shiftValue = maxCommon - 2 - m;
+		        if(shiftValue < shiftTable[hashValue]){          // Build shift table
+			        shiftTable[hashValue] = shiftValue;
+		        }
+		        if(shiftValue == 0){                            // Build suffix table
+			        node = new pNode(pattern[j], pattern[j].substr(0, blockSize));
+			        if(suffixTable[hashValue] != NULL){
+				        pNode *tmp = suffixTable[hashValue];
+				        node->next = tmp;
+				        suffixTable[hashValue] = node;
+			        }
+			        else{
+				        suffixTable[hashValue] = node;
+			        }
+		        }
+	        }
         }
     }
 }
 
 int main(int argv, char *arg[]) {
 	if(!strcmp(arg[3], "-s")) fixArguments = 5;
-//    if(arg[3] == "-s") fixArguments = 5;
     buildTables(argv, arg);
 
 	// Read directory
@@ -149,7 +167,7 @@ void readByLine(string path, vector<fNode> *okFile, struct dirent *dirent, int a
 					node = node->next;
 					cIndex = rIndex + 1 - maxCommon;
 				}
-				rIndex++;
+				rIndex += maxCommon;
 			}
 		}
 	}
@@ -167,7 +185,7 @@ void readByLine(string path, vector<fNode> *okFile, struct dirent *dirent, int a
 void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent){
 	int matches = 0;                                                                                // The number of matches
 	unsigned long rIndex = (unsigned long) maxCommon - blockSize + 1;                               // Read index
-	unsigned long cIndex = 0;                                                                       // Compare index (extract block from line)
+	unsigned long cIndex = 0;                                                // Compare index (extract block from line)
 	string candidate;
 	int canHash = 0;
 	pNode *node;
@@ -219,7 +237,7 @@ void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent){
 				node = node->next;
 				cIndex = rIndex + 1 - maxCommon;
 			}
-			rIndex++;
+			rIndex += maxCommon;
 		}
 	}
 	if(checkAllPatternMatched(&matchedPattern)){                                 // If all patterns are matched
@@ -268,9 +286,11 @@ bool compare(fNode x, fNode y){
 	return x.file < y.file;
 }
 bool stringMatch(string x, string y){
-	if(x.length() == 2 && y.length() == 2){
-		return hash_any(x) == hash_any(y);
-	}
+
+//	if(x.length() == 2 && y.length() == 2){
+//		return hash_any(x) == hash_any(y);
+//	}
+	return strcasecmp(x.c_str(), y.c_str()) == 0;
 	transform(x.begin(), x.end(), x.begin(), ::tolower);
 	transform(y.begin(), y.end(), y.begin(), ::tolower);
 	return x == y;
@@ -279,8 +299,8 @@ bool stringMatch(string x, string y){
 int hash_any(string patternBlock){
 	int x = patternBlock.at(0);
 	int y = patternBlock.at(1);
-	if(x >= 65 && x <= 90) x += 32;
-	if(y >= 65 && y <= 90) y += 32;
+//	if(x >= 65 && x <= 90) x += 32;
+//	if(y >= 65 && y <= 90) y += 32;
 	return 128 * x + y;
 }
 
@@ -289,4 +309,8 @@ bool checkAllPatternMatched(vector<bool> *p){
 		if(p->at(i) != true) return false;
 	}
 	return true;
+}
+
+int hash_block(int x, int y){
+	return 128 * x + y;
 }
