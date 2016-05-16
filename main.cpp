@@ -97,8 +97,8 @@ int main(int argv, char *arg[]) {
 	// When finish reading, sort and output result
 	sort(okFile.begin(), okFile.end(), compare);
 	for(vector<fNode>::iterator ite = okFile.begin(); ite != okFile.end(); ite++){
-		cout << ite->file << ": " << ite->match << endl;
-//		cout << ite->file << endl;
+//		cout << ite->file << ": " << ite->match << endl;
+		cout << ite->file << endl;
 	}
 
 	return 0;
@@ -195,20 +195,16 @@ void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent){
 	string line = readFile(path);
 
 	while(rIndex < line.length()){                          // Read character one by one
-
 		asc2 = line.at(rIndex);
 		if((asc2 != 32 && asc2 < 65) || asc2 > 122 || (asc2 > 90 && asc2 < 97)){
 			rIndex += maxCommon;
 			continue;
 		}
-
 		asc1 = line.at(rIndex - 1);
-
 		if((asc1 != 32 && asc1 < 65) || asc1 > 122 || (asc1 > 90 && asc1 < 97)){
 			rIndex += maxCommon - blockSize + 1;
 			continue;
 		}
-
 		canHash = hash_any((int) asc1, (int) asc2);
 
 		if(shiftTable[canHash] != 0){
@@ -223,6 +219,7 @@ void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent){
 			node = suffixTable[canHash];
 			while(node != NULL){                        // Compare each pattern with identical suffix
 				if(stringMatch(cIndex, node->prefix.length(), &line, node->prefix)){
+//				if(checkString(line.substr(cIndex, 2), node->prefix)){
 					// If prefix matched. then compare all string
 
 					// If the length of string is shorter than pattern, stop
@@ -231,6 +228,7 @@ void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent){
 						break;
 					}
 					if(stringMatch(cIndex, node->pattern.length(), &line, node->pattern)){       // Match
+//					if(checkString(line.substr(cIndex, node->pattern.length()), node->pattern)){
 						matches++;
 						for(int i = 0; i < NOofPatterns; i++){
 							if(pattern[i] == node->pattern){
@@ -321,4 +319,10 @@ bool checkAllPatternMatched(vector<bool> *p){
 
 int hash_block(int x, int y){
 	return 128 * x + y;
+}
+
+bool checkString(string x, string y){
+	transform(x.begin(), x.end(), x.begin(), ::tolower);
+	transform(y.begin(), y.end(), y.begin(), ::tolower);
+	return x == y;
 }

@@ -52,4 +52,5 @@ void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent);
 string readFile(string path);
 bool checkAllPatternMatched(vector<bool> *);
 int hash_block(int, int);
+bool checkString(string x, string y);
 #endif //INC_3_MAIN_H
