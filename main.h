@@ -5,7 +5,7 @@
 #ifndef INC_3_MAIN_H
 #define INC_3_MAIN_H
 
-#define vectorLength 128 * 129 + 1
+#define vectorLength (128 * 129 + 1)
 #define blockSize 2
 
 #include <iostream>
@@ -15,6 +15,8 @@
 #include <algorithm>
 #include <string>
 #include <sstream>
+#include <cstring>
+#include <set>
 
 using namespace std;
 
@@ -48,10 +50,6 @@ bool compare(fNode, fNode);
 bool stringMatch(unsigned long cIndex, unsigned int length, string *source, string target);
 int hash_any(int x, int y);
 void buildTables(int argv, char *arg[]);
-void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent);
-string readFile(string path);
 bool checkAllPatternMatched(vector<bool> *);
-int hash_block(int, int);
-bool checkString(string x, string y);
 void clean(void);
 #endif //INC_3_MAIN_H

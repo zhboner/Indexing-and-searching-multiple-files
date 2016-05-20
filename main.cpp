@@ -1,5 +1,3 @@
-#include <cstring>
-#include <set>
 #include "main.h"
 
 vector<int> shiftTable;
@@ -35,8 +33,8 @@ void buildTables(int argv, char *arg[]){
 	for(int j = 0; j < NOofPatterns; ++j){
 		asc2 = pattern[j].at(0);
 		for(int k = 0; k < 256; ++k){
-			shiftTable[hash_block(k, (int) asc2)] = maxCommon - blockSize + 1;
-			shiftTable[hash_block(k, toupper(asc2))] = maxCommon - blockSize + 1;
+			shiftTable[hash_any(k, (int) asc2)] = maxCommon - blockSize + 1;
+			shiftTable[hash_any(k, toupper(asc2))] = maxCommon - blockSize + 1;
 
 		}
 	}
@@ -48,10 +46,10 @@ void buildTables(int argv, char *arg[]){
 
 	        asc1 = block.at(0), asc2 = block.at(1);
 	        hashTable.clear();
-	        hashTable.insert(hash_block(tolower(asc1), tolower(asc2)));
-	        hashTable.insert(hash_block(toupper(asc1), toupper(asc2)));
-	        hashTable.insert(hash_block(tolower(asc1), toupper(asc2)));
-	        hashTable.insert(hash_block(toupper(asc1), tolower(asc2)));
+	        hashTable.insert(hash_any(tolower(asc1), tolower(asc2)));
+	        hashTable.insert(hash_any(toupper(asc1), toupper(asc2)));
+	        hashTable.insert(hash_any(tolower(asc1), toupper(asc2)));
+	        hashTable.insert(hash_any(toupper(asc1), tolower(asc2)));
 
 	        for(set<int>::iterator i = hashTable.begin(); i != hashTable.end(); ++i){
 		        hashValue = *i;
@@ -93,14 +91,12 @@ int main(int argv, char *arg[]) {
 
 			// Read a file
 			readByLine(path, &okFile, dirent, argv);
-//			readWholeFile(path, &okFile, dirent);
 		}
 	}
 
 	// When finish reading, sort and output result
 	sort(okFile.begin(), okFile.end(), compare);
 	for(vector<fNode>::iterator ite = okFile.begin(); ite != okFile.end(); ite++){
-//		cout << ite->file << ": " << ite->match << endl;
 		cout << ite->file << endl;
 	}
 
@@ -138,7 +134,7 @@ void readByLine(string path, vector<fNode> *okFile, struct dirent *dirent, int a
 			if(shiftTable[canHash] != 0){
 				// Go ahead if not the end of a pattern
 				rIndex += shiftTable[canHash];
-				if(rIndex >= line.length()){                // TODO: Considering change line and compare again
+				if(rIndex >= line.length()){
 					break;
 				}
 			}
@@ -175,82 +171,6 @@ void readByLine(string path, vector<fNode> *okFile, struct dirent *dirent, int a
 	if(checkAllPatternMatched(&matchedPattern)){                                 // If all patterns are matched
 		okFile->push_back(fNode(dirent->d_name, matches));
 	}
-
-//	patterns.empty();
-
-
-}
-
-void readWholeFile(string path, vector<fNode> *okFile, struct dirent *dirent){
-	int matches = 0;                                                                                // The number of matches
-	unsigned long rIndex = (unsigned long) maxCommon - blockSize + 1;                               // Read index
-	unsigned long cIndex = 0;                                                // Compare index (extract block from line)
-//	string candidate;
-	int canHash = 0;
-	pNode *node;
-	vector<bool> matchedPattern(NOofPatterns, false);
-
-	char asc1, asc2;
-	string line = readFile(path);
-
-	while(rIndex < line.length()){                          // Read character one by one
-		asc2 = line.at(rIndex);
-		if((asc2 != 32 && asc2 < 65) || asc2 > 122 || (asc2 > 90 && asc2 < 97)){
-			rIndex += maxCommon;
-			continue;
-		}
-		asc1 = line.at(rIndex - 1);
-		if((asc1 != 32 && asc1 < 65) || asc1 > 122 || (asc1 > 90 && asc1 < 97)){
-			rIndex += maxCommon - blockSize + 1;
-			continue;
-		}
-		canHash = hash_any((int) asc1, (int) asc2);
-
-		if(shiftTable[canHash] != 0){
-			// Go ahead if not the end of a pattern
-			rIndex += shiftTable[canHash];
-			if(rIndex >= line.length()){
-				break;
-			}
-		}
-		else{                   // At the end of a pattern
-			cIndex = rIndex + 1 - maxCommon;
-			node = suffixTable[canHash];
-			while(node != NULL){                        // Compare each pattern with identical suffix
-				if(stringMatch(cIndex, node->prefix.length(), &line, node->prefix)){
-					// If prefix matched. then compare all string
-
-					// If the length of string is shorter than pattern, stop
-					if(cIndex + node->pattern.length() > line.length()){
-						rIndex += node->pattern.length();
-						break;
-					}
-					if(stringMatch(cIndex, node->pattern.length(), &line, node->pattern)){       // Match
-						matches++;
-						for(int i = 0; i < NOofPatterns; i++){
-							if(pattern[i] == node->pattern){
-								matchedPattern[i] = true;
-								break;
-							}
-						}
-					}
-				}
-				node = node->next;
-				cIndex = rIndex + 1 - maxCommon;
-			}
-			rIndex += 1;
-		}
-	}
-	if(checkAllPatternMatched(&matchedPattern)){                                 // If all patterns are matched
-		okFile->push_back(fNode(dirent->d_name, matches));
-	}
-}
-
-string readFile(string path){
-	ifstream f(path);
-	stringstream strStream;
-	strStream << f.rdbuf();
-	return strStream.str();
 }
 bool compare(fNode x, fNode y){
 	if(x.match != y.match){
@@ -272,10 +192,6 @@ bool stringMatch(unsigned long cIndex, unsigned int length, string *source, stri
 }
 
 int hash_any(int x, int y){
-//	int x = patternBlock.at(0);
-//	int y = patternBlock.at(1);
-//	if(x >= 65 && x <= 90) x += 32;
-//	if(y >= 65 && y <= 90) y += 32;
 	return 128 * x + y;
 }
 
@@ -284,16 +200,6 @@ bool checkAllPatternMatched(vector<bool> *p){
 		if(p->at(i) != true) return false;
 	}
 	return true;
-}
-
-int hash_block(int x, int y){
-	return 128 * x + y;
-}
-
-bool checkString(string x, string y){
-	transform(x.begin(), x.end(), x.begin(), ::tolower);
-	transform(y.begin(), y.end(), y.begin(), ::tolower);
-	return x == y;
 }
 
 void clean(){
