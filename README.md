@@ -1,4 +1,4 @@
-1. Wu Manber algorithm
+##1. Wu Manber algorithm
 Using Wu Manber algorithm to perform pattern search over files in the codes. By this algorithm, every two characters are regarded as a block. And build the 
 pattern list by the length of the shortest pattern among patterns (longest common length). When searching over the files, program always compare the last 
 block in max common length. If it doesn't match, then skiping the text according to the length in shift table (this is the first array the program take use 
@@ -7,7 +7,7 @@ matched successfully. If matched successfully again, following the linked list (
 match it character by character. This program builds 3 data structures before searching.
 
 
-2. Two vector and one linked list
+##2. Two vector and one linked list
 The first vector is shift table. When building this table, program only care about text within the max common length. Shift table is a list that containing 
 all blocks formed by all ASCII characters. Its length is 128 * 128 + 128 + 1. Each blocks corresponds an entry in this vector by hash_any() function. This 
 vector is initialized by max common length and in each pattern if the distance from a block to the tail of the block is smaller than its entry value, 
@@ -20,7 +20,7 @@ The linked list is based on suffix table. If two or more patterns have the same 
 may be more than one linked list in terms of various patterns.
 
 
-3. Two classes
+##3. Two classes
 pattern node (pNode) has three attributes. pNode.pattern is a string that save the specified pattern with the suffix corresponding to the index. 
 pNode.prefix is the prefix of this pattern, recording this string just for convenient matching when searching over documents. pNode.next is a pointer to 
 the next instace with the same suffix. If it is the last one, this pointer is NULL.
@@ -29,7 +29,7 @@ file node (fNode) is used when sorting the file names by specified rules. It has
 the amount of matches in this file.
 
 
-4. Functions
+##4. Functions
 buildTables(). This function is called before searching, which is used to build required vectors and linked lists based on input patterns.
 
 readByLine(). This function is called for every file.This is the main function for search over text. It read file line by line and picks blocks from text. 
