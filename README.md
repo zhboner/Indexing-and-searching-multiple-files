@@ -1,4 +1,4 @@
-##Introduction
+##0. Introduction
 This program perform quick searching specified words through multiple files with less than 15 seconds, ram cost less than 12 mb. The algorithm is Wu Manber algorithm.
 
 ##1. Wu Manber algorithm
